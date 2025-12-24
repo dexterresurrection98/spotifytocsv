@@ -1,0 +1,10 @@
+# Robots.txt for spotifytocsv.com
+
+User-agent: *
+Allow: /
+
+# Sitemap location
+Sitemap: https://spotifytocsv.com/sitemap.xml
+
+# Disallow callback page (not useful for search)
+Disallow: /callback.html
