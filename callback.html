@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Authenticating... | Spotify Playlist Exporter</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 50%, #0a0a0a 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+        }
+
+        .callback-container {
+            text-align: center;
+            padding: 2rem;
+        }
+
+        .spinner {
+            width: 48px;
+            height: 48px;
+            border: 3px solid rgba(255, 255, 255, 0.1);
+            border-top-color: #1DB954;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 1.5rem;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        h1 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        p {
+            font-size: 0.875rem;
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        .error {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            border-radius: 12px;
+            padding: 1.5rem;
+            max-width: 400px;
+        }
+
+        .error h1 {
+            color: #ef4444;
+        }
+
+        .error a {
+            color: #1DB954;
+            text-decoration: none;
+        }
+
+        .error a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="callback-container" id="container">
+        <div class="spinner"></div>
+        <h1>Authenticating...</h1>
+        <p>Please wait while we connect to Spotify</p>
+    </div>
+
+    <script src="js/auth.js"></script>
+    <script>
+        (async function handleCallback() {
+            const container = document.getElementById('container');
+
+            try {
+                // Get the authorization code from URL
+                const urlParams = new URLSearchParams(window.location.search);
+                const code = urlParams.get('code');
+                const error = urlParams.get('error');
+
+                if (error) {
+                    throw new Error(error === 'access_denied'
+                        ? 'Access was denied. Please try again and accept the permissions.'
+                        : `Authentication error: ${error}`);
+                }
+
+                if (!code) {
+                    throw new Error('No authorization code received. Please try logging in again.');
+                }
+
+                // Exchange code for access token
+                const token = await SpotifyAuth.exchangeCodeForToken(code);
+
+                if (!token) {
+                    throw new Error('Failed to get access token. Please try again.');
+                }
+
+                // Store token and redirect to main app
+                sessionStorage.setItem('spotify_access_token', token.access_token);
+                sessionStorage.setItem('spotify_token_expiry', Date.now() + (token.expires_in * 1000));
+
+                // Clear the code verifier
+                sessionStorage.removeItem('spotify_code_verifier');
+
+                // Redirect to main app
+                window.location.href = './';
+
+            } catch (err) {
+                console.error('Callback error:', err);
+                container.innerHTML = `
+                    <div class="error">
+                        <h1>Authentication Failed</h1>
+                        <p>${err.message}</p>
+                        <p style="margin-top: 1rem;"><a href="./">← Back to Home</a></p>
+                    </div>
+                `;
+            }
+        })();
+    </script>
+</body>
+
+</html>
