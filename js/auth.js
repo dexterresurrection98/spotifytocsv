@@ -7,7 +7,9 @@
 const SpotifyAuth = (function () {
     // Configuration
     const CLIENT_ID = '557282b44de24886a3c5c43092e3ad58';
-    const REDIRECT_URI = 'http://127.0.0.1:5500/callback.html';
+
+    // Auto-detect environment: use current origin for redirect
+    const REDIRECT_URI = window.location.origin + '/callback.html';
     const SCOPES = [
         'playlist-read-private',
         'playlist-read-collaborative',
